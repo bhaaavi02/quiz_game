@@ -18,11 +18,12 @@ export interface PlacedWord extends WordData {
   col: number;
   direction: 'ACROSS' | 'DOWN';
   isSolved: boolean;
+  hintsUsed: number;
 }
 
 export interface CrosswordCell {
   char: string | null;
-  wordIndices: number[]; // Index into PlacedWord array
+  wordIndices: number[];
   isBlack: boolean;
   userInput: string;
   isSolved: boolean;
@@ -31,13 +32,13 @@ export interface CrosswordCell {
 export interface UserProgress {
   xp: number;
   level: number;
-  streak: number;
   completedPuzzles: number;
-  unlockedCategories: string[];
+  hasSeenTutorial: boolean;
+  highScore: number;
 }
 
 export interface GameState {
-  difficulty: Difficulty;
+  currentLevel: number;
   grid: CrosswordCell[][];
   placedWords: PlacedWord[];
   currentWordIndex: number | null;

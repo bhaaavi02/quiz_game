@@ -4,10 +4,35 @@ import { Difficulty, WordData } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-export const generateTechWords = async (difficulty: Difficulty, category?: string): Promise<WordData[]> => {
-  const prompt = `Generate 10-12 CS terms. Difficulty: ${difficulty}. Category: ${category || 'General'}.
-  JSON format: Array of {answer: string, clue: string, category: string, hints: string[3]}.
-  Words: 3-10 chars. Hints: 1 subtle, 1 conceptual, 1 partial reveal.`;
+// Topics progression to ensure unique questions across levels
+const TOPICS = [
+  "Binary & Logic Gates",
+  "HTML & CSS Foundations",
+  "Variable Types & Memory",
+  "HTTP & Web Protocols",
+  "Basic Data Structures (Arrays/Lists)",
+  "SQL & Database Basics",
+  "Operating System Kernels",
+  "Cloud Computing Fundamentals",
+  "Cybersecurity Threats",
+  "Asynchronous Programming",
+  "System Design & Scalability",
+  "Machine Learning Basics"
+];
+
+export const generateLevelContent = async (level: number): Promise<WordData[]> => {
+  const topic = TOPICS[(level - 1) % TOPICS.length];
+  const difficulty = level < 5 ? Difficulty.EASY : level < 10 ? Difficulty.MEDIUM : Difficulty.HARD;
+  
+  const count = 5 + Math.min(level, 10); // Grows from 6 words up to 15
+
+  const prompt = `Act as a CS Professor. Generate level ${level} of a tech crossword campaign.
+  Topic: ${topic}. Difficulty: ${difficulty}.
+  Return ${count} unique tech terms related to ${topic}.
+  Ensure clues are professional and hints are progressive.
+  Format: JSON array of {answer, clue, category, hints[3]}.
+  Hints: 1) Broad context, 2) Technical detail, 3) Starting letter/pattern.
+  Exclude common words used in previous levels. Focus on specific technical terminology.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -40,16 +65,17 @@ export const generateTechWords = async (difficulty: Difficulty, category?: strin
       answer: w.answer.toUpperCase().replace(/[^A-Z]/g, '')
     }));
   } catch (error) {
-    console.error("Gemini Generation Error:", error);
-    return getFallbackWords();
+    console.error("Gemini Error:", error);
+    return getLevelFallback(level);
   }
 };
 
-export const getFallbackWords = (): WordData[] => [
-  { answer: "REACT", clue: "UI library by Meta", category: "Web", hints: ["Components", "Virtual DOM", "Hooks"] },
-  { answer: "DOCKER", clue: "Container platform", category: "DevOps", hints: ["Ship icons", "Images", "Not a VM"] },
-  { answer: "NODE", clue: "JS on the server", category: "Backend", hints: ["V8 engine", "npm", "Ryan Dahl"] },
-  { answer: "SQL", clue: "Relational query language", category: "Data", hints: ["SELECT *", "Joins", "Databases"] },
-  { answer: "CLOUD", clue: "On-demand computing resources", category: "Infrastructure", hints: ["AWS/Azure", "SaaS", "The internet"] },
-  { answer: "ARRAY", clue: "Linear data structure", category: "Fundamentals", hints: ["Fixed size", "Index 0", "Contiguous memory"] }
-];
+const getLevelFallback = (level: number): WordData[] => {
+  // Static fallbacks for offline or error states
+  return [
+    { answer: "CACHE", clue: "High-speed data storage layer", category: "Memory", hints: ["Near CPU", "Speeds up access", "C_C_E"] },
+    { answer: "INDEX", clue: "Speeds up database queries", category: "Data", hints: ["B-Tree", "Not a full scan", "I_D_X"] },
+    { answer: "PROXY", clue: "Intermediate server for requests", category: "Network", hints: ["Forward or Reverse", "Privacy layer", "P_O_Y"] },
+    { answer: "STORM", clue: "Distributed real-time computation system", category: "Big Data", hints: ["Apache project", "Stream processing", "S_O_M"] }
+  ];
+};
